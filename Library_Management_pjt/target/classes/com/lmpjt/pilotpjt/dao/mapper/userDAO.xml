@@ -31,7 +31,7 @@
 	
 	<update id="updateUserInfo">
 		update userinfo set userNumber=#{userNumber}, userId=#{userId}, userPw=#{userNewPw}, userName=#{userName}, userTel=#{userTel}
-		, userEmail=#{userEmail}, userBirth=#{userBirth}, userZipCode=#{userZipCode}, userAddress=#{userAddress}, userDetailAddress=#{userDetailAddress} where
+		, userEmail=#{userEmail}, userZipCode=#{userZipCode}, userAddress=#{userAddress}, userDetailAddress=#{userDetailAddress} where
 		userNumber=#{userNumber}
 	</update>
 	

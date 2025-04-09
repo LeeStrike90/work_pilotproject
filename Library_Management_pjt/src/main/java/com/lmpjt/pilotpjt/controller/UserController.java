@@ -87,21 +87,27 @@ public class UserController
 		return "user_info";
 	}
 
-//	@RequestMapping("/user_update_view")
-//	public String getUserInfo(UserDTO user) {
-//		System.out.println(user.getUserPw());
-//		return "user_update";
-//	}
-
 	@RequestMapping("/user_update_view")
-	public String getUserInfo(@RequestParam HashMap<String, String> param, Model model)
+	public String getUserInfo(@RequestParam HashMap<String, String> param)
 	{
 
+		return "user_update";
+	}
 
-		UserDTO user = service.getUserInfo(param); // DB에서 정보 조회
-		model.addAttribute("loginUser", user);
-		System.out.println(user.getUserPw());
-		return "user_update"; // JSP에서 ${loginUser}로 접근
+	@RequestMapping("/userUpdate")
+	public String updateUserInfo(@RequestParam HashMap<String, String> param, HttpSession session)
+	{
+		int result = service.updateUserInfo(param);
+//		service.updateUserInfo(param);
+		if (result > 0)
+		{
+			session.invalidate(); // 세션 초기화 → 자동 로그아웃
+			return "redirect:/loginView"; // 로그인 페이지로
+		} else
+		{
+			return "redirect:/user_update_view"; // 실패 시 다시 수정 화면
+		}
+		
 	}
 
 //	@RequestMapping("/user_update")

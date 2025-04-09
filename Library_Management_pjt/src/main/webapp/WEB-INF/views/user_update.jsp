@@ -115,14 +115,16 @@
 					var userNewPwCheck = document
 							.getElementById("userNewPwCheck").value;
 
-					if (userNewPw !== userNewPwCheck) {
+					if (userNewPw != userNewPwCheck) {
 						event.preventDefault();
 						alert("재확인 비밀번호가 일치하지 않습니다.");
+						event.preventDefault();
 						return false;
 					}
 					if(${loginUser.userPw} != userPw)
 					{
 						alert("현재 비밀번호가 일치하지 않습니다.");
+						event.preventDefault();
 						return false;
 					}
 					alert("회원정보 수정 완료!")
