@@ -45,6 +45,7 @@
             const newPassword = document.getElementById('newPassword').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
             const passwordError = document.getElementById('passwordError');
+            const currentPassword = document.getElementById('currentPassword');
             
             // 비밀번호 일치 여부 확인
             if (newPassword !== confirmPassword) {

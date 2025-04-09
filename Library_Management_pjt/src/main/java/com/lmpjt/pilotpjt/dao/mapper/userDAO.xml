@@ -29,10 +29,18 @@
 		userinfo where userId=#{userId}
 	</select>
 	
+<!-- 	<update id="updateUserInfo"> -->
+<!-- 		update userinfo set userNumber=#{userNumber}, userId=#{userId}, userPw=#{userNewPw}, userName=#{userName}, userTel=#{userTel} -->
+<!-- 		, userEmail=#{userEmail}, userZipCode=#{userZipCode}, userAddress=#{userAddress}, userDetailAddress=#{userDetailAddress} where -->
+<!-- 		userNumber=#{userNumber} -->
+<!-- 	</update> -->
 	<update id="updateUserInfo">
-		update userinfo set userNumber=#{userNumber}, userId=#{userId}, userPw=#{userNewPw}, userName=#{userName}, userTel=#{userTel}
+		update userinfo set userNumber=#{userNumber}, userId=#{userId}, userName=#{userName}, userTel=#{userTel}
 		, userEmail=#{userEmail}, userZipCode=#{userZipCode}, userAddress=#{userAddress}, userDetailAddress=#{userDetailAddress} where
 		userNumber=#{userNumber}
+	</update>
+	<update id="updateUserPwInfo">
+		update userinfo set userPw=#{userNewPw} where userNumber=#{userNumber}
 	</update>
 	
 	<select id="checkPw" resultType="com.lmpjt.pilotpjt.dto.UserDTO">

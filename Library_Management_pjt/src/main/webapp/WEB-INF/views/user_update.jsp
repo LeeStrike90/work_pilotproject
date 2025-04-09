@@ -80,14 +80,7 @@
 			<label for="userPassword">현재 비밀번호:</label> <input type="password"
 				id="userPw" name="userPw" placeholder="기존 비밀번호를 입력" />
 		</div>
-		<div>
-			<label for="userPassword">새 비밀번호:</label> <input type="password"
-				id="userNewPw" name="userNewPw" placeholder="변경할 비밀번호를 입력" />
-		</div>
-		<div>
-			<label for="userPassword">새 비밀번호입력확인:</label> <input type="password"
-				id="userNewPwCheck" name="userNewPwCheck" placeholder="변경할 비밀번호 재입력" />
-		</div>
+		
 
 		<div>
 			<button type="submit">수정 완료</button>
@@ -111,16 +104,6 @@
 				"submit",
 				function(event) {
 					var userPw = document.getElementById("userPw").value;
-					var userNewPw = document.getElementById("userNewPw").value;
-					var userNewPwCheck = document
-							.getElementById("userNewPwCheck").value;
-
-					if (userNewPw != userNewPwCheck) {
-						event.preventDefault();
-						alert("재확인 비밀번호가 일치하지 않습니다.");
-						event.preventDefault();
-						return false;
-					}
 					if(${loginUser.userPw} != userPw)
 					{
 						alert("현재 비밀번호가 일치하지 않습니다.");
