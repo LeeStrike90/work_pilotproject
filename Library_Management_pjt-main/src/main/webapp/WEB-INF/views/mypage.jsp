@@ -15,6 +15,31 @@
 <link rel="stylesheet"
 	href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="/pilotpjt/resources/js/mypage.js"></script>
+<script src="${pageContext.request.contextPath}/resources/js/jquery.js"></script>
+<script type="text/javascript">
+	function return_submit(button) {
+		const form = button.closest("form"); // 해당 버튼의 form
+		if (!form.checkValidity()) {
+			form.reportValidity();
+			return;
+		}
+
+		const formData = $(form).serialize(); // 개별 form 기준으로 serialize
+
+		$.ajax({
+			type : "post",
+			data : formData,
+			url : "book_return",
+			success : function(data) {
+				alert("정상적으로 반납되었습니다.");
+				location.href = "mypage"; // 새로고침
+			},
+			error : function() {
+				alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+			}
+		});
+	}
+</script>
 </head>
 <body>
 	<jsp:include page="header.jsp" />
@@ -158,36 +183,35 @@
 					if (borrowingCount > 0) {
 					%>
 					<div class="book-list">
-						<!-- 예시 데이터: 실제로는 DB에서 가져온 데이터로 대체해야 합니다 -->
-						<div class="book-item">
-							<div class="book-cover">
-								<img src="/pilotpjt/resources/images/book_cover1.jpg" alt="책 표지"
-									onerror="this.src='/pilotpjt/resources/images/default-book.png'">
-							</div>
-							<div class="book-info">
-								<div class="book-title">해리 포터와 마법사의 돌</div>
-								<div class="book-author">J.K. 롤링</div>
-								<div class="book-dates">
-									<span>대출일: 2023-05-15</span> <span>반납예정일: 2023-05-29</span>
+						<c:forEach var="book" items="${bookBorrowedList}">
+							<div class="book-item">
+								<div class="book-cover">
+									<div class="book-cover-placeholder">
+										<i class="fas fa-book"></i>
+									</div>
+								</div>
+								<div class="book-info">
+									<div class="book-title">${book.bookTitle}</div>
+									<div class="book-author">${book.bookWrite}</div>
+									<div class="book-dates">
+										<span>대출일 : ${book.bookBorrowDate}</span> <span>반납예정일 :
+											${book.bookReturnDate}</span>
+									</div>
+								</div>
+								<div class="book-status status-borrowed">대출 중</div>
+								<div class="book-status status-return">
+									<form class="returnForm"
+										style="display: inline-block; margin-top: 10px;">
+										<input type="hidden" name="bookNumber"
+											value="${book.bookNumber}">
+										<button type="button" class="return-button"
+											onclick="return_submit(this)">
+											<i class="fas fa-undo-alt"></i> 반납하기
+										</button>
+									</form>
 								</div>
 							</div>
-							<div class="book-status status-borrowed">대출 중</div>
-						</div>
-
-						<div class="book-item">
-							<div class="book-cover">
-								<img src="/pilotpjt/resources/images/book_cover2.jpg" alt="책 표지"
-									onerror="this.src='/pilotpjt/resources/images/default-book.png'">
-							</div>
-							<div class="book-info">
-								<div class="book-title">어린 왕자</div>
-								<div class="book-author">생텍쥐페리</div>
-								<div class="book-dates">
-									<span>대출일: 2023-05-10</span> <span>반납예정일: 2023-05-24</span>
-								</div>
-							</div>
-							<div class="book-status status-overdue">연체 (3일)</div>
-						</div>
+						</c:forEach>
 					</div>
 					<%
 					} else {
@@ -214,86 +238,76 @@
 					<div class="tab-container">
 						<div class="tab-buttons">
 							<button class="tab-button active" onclick="showHistoryTab('all')">전체</button>
-							<button class="tab-button" onclick="showHistoryTab('returned')">반납
-								완료</button>
-							<button class="tab-button" onclick="showHistoryTab('overdue')">연체
-								이력</button>
+							<button class="tab-button" onclick="showHistoryTab('returned')">반납기록</button>
+							<button class="tab-button" onclick="showHistoryTab('overdue')">대출기록</button>
 						</div>
 
+						<!-- 전체기록 -->
 						<div id="all-history" class="tab-content active">
 							<div class="book-list">
-								<!-- 예시 데이터: 실제로는 DB에서 가져온 데이터로 대체해야 합니다 -->
-								<div class="book-item">
-									<div class="book-cover">
-										<img src="/pilotpjt/resources/images/book_cover3.jpg"
-											alt="책 표지"
-											onerror="this.src='/pilotpjt/resources/images/default-book.png'">
-									</div>
-									<div class="book-info">
-										<div class="book-title">데미안</div>
-										<div class="book-author">헤르만 헤세</div>
-										<div class="book-dates">
-											<span>대출일: 2023-04-15</span> <span>반납일: 2023-04-28</span>
+								<c:forEach var="bookAllRecord" items="${bookAllList}">
+									<div class="book-item">
+										<div class="book-cover">
+											<div class="book-cover-placeholder">
+												<i class="fas fa-book"></i>
+											</div>
+										</div>
+										<div class="book-info">
+											<div class="book-title">${bookAllRecord.bookTitle}</div>
+											<div class="book-author">${bookAllRecord.bookWrite}</div>
+											<div class="book-dates">
+												<span>대출일 : ${bookAllRecord.bookBorrowDate}</span> <span>반납일
+													: ${bookAllRecord.bookReturnDate}</span>
+											</div>
 										</div>
 									</div>
-									<div class="book-status status-returned">반납 완료</div>
-								</div>
-
-								<div class="book-item">
-									<div class="book-cover">
-										<img src="/pilotpjt/resources/images/book_cover4.jpg"
-											alt="책 표지"
-											onerror="this.src='/pilotpjt/resources/images/default-book.png'">
-									</div>
-									<div class="book-info">
-										<div class="book-title">1984</div>
-										<div class="book-author">조지 오웰</div>
-										<div class="book-dates">
-											<span>대출일: 2023-03-20</span> <span>반납일: 2023-04-05</span>
-										</div>
-									</div>
-									<div class="book-status status-overdue">연체 반납 (2일)</div>
-								</div>
+								</c:forEach>
 							</div>
 						</div>
 
+						<!-- 반납완료 -->
 						<div id="returned-history" class="tab-content">
 							<div class="book-list">
-								<div class="book-item">
-									<div class="book-cover">
-										<img src="/pilotpjt/resources/images/book_cover3.jpg"
-											alt="책 표지"
-											onerror="this.src='/pilotpjt/resources/images/default-book.png'">
-									</div>
-									<div class="book-info">
-										<div class="book-title">데미안</div>
-										<div class="book-author">헤르만 헤세</div>
-										<div class="book-dates">
-											<span>대출일: 2023-04-15</span> <span>반납일: 2023-04-28</span>
+								<c:forEach var="bookReturnRecord" items="${bookReturnList}">
+									<div class="book-item">
+										<div class="book-cover">
+											<div class="book-cover-placeholder">
+												<i class="fas fa-book"></i>
+											</div>
+										</div>
+										<div class="book-info">
+											<div class="book-title">${bookReturnRecord.bookTitle}</div>
+											<div class="book-author">${bookReturnRecord.bookWrite}</div>
+											<div class="book-dates">
+												<span>대출일 : ${bookReturnRecord.bookBorrowDate}</span> <span>반납일
+													: ${bookReturnRecord.bookReturnDate}</span>
+											</div>
 										</div>
 									</div>
-									<div class="book-status status-returned">반납 완료</div>
-								</div>
+								</c:forEach>
 							</div>
 						</div>
 
+						<!-- 연체이력 -->
 						<div id="overdue-history" class="tab-content">
 							<div class="book-list">
-								<div class="book-item">
-									<div class="book-cover">
-										<img src="/pilotpjt/resources/images/book_cover4.jpg"
-											alt="책 표지"
-											onerror="this.src='/pilotpjt/resources/images/default-book.png'">
-									</div>
-									<div class="book-info">
-										<div class="book-title">1984</div>
-										<div class="book-author">조지 오웰</div>
-										<div class="book-dates">
-											<span>대출일: 2023-03-20</span> <span>반납일: 2023-04-05</span>
+								<c:forEach var="bookBorrowRecord" items="${bookBorrowList}">
+									<div class="book-item">
+										<div class="book-cover">
+											<div class="book-cover-placeholder">
+												<i class="fas fa-book"></i>
+											</div>
+										</div>
+										<div class="book-info">
+											<div class="book-title">${bookBorrowRecord.bookTitle}</div>
+											<div class="book-author">${bookBorrowRecord.bookWrite}</div>
+											<div class="book-dates">
+												<span>대출일 : ${bookBorrowRecord.bookBorrowDate}</span> <span>반납일
+													: ${bookBorrowRecord.bookReturnDate}</span>
+											</div>
 										</div>
 									</div>
-									<div class="book-status status-overdue">연체 반납 (2일)</div>
-								</div>
+								</c:forEach>
 							</div>
 						</div>
 					</div>
@@ -310,12 +324,13 @@
 
 					<form action="userPwUpdate" method="post"
 						onsubmit="return validatePasswordForm()">
-						<input type="hidden" name="userNumber" value="<%= user.getUserNumber() %>">
+						<input type="hidden" name="userNumber"
+							value="<%=user.getUserNumber()%>">
 						<div class="info-grid" style="grid-template-columns: 1fr;">
 							<div class="info-item">
 								<div class="info-label">현재 비밀번호</div>
- 									
-								<input type="password" id="currentPassword" name="userPw" 
+
+								<input type="password" id="currentPassword" name="userPw"
 									class="form-input" value="${userPw}"
 									style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"
 									required>
@@ -325,8 +340,8 @@
 
 							<div class="info-item">
 								<div class="info-label">새 비밀번호</div>
-								
-								<input type="password" id="newPassword" name="userNewPw" 
+
+								<input type="password" id="newPassword" name="userNewPw"
 									class="form-input" value="${userNewPw}"
 									style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"
 									required>
@@ -337,9 +352,10 @@
 
 							<div class="info-item">
 								<div class="info-label">새 비밀번호 확인</div>
-								
+
 								<input type="password" id="confirmPassword"
-									name="userNewPwCheck" class="form-input" value="${userNewPwCheck}"
+									name="userNewPwCheck" class="form-input"
+									value="${userNewPwCheck}"
 									style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px;"
 									required>
 								<div id="passwordError"
@@ -349,8 +365,8 @@
 
 
 						<div class="action-buttons">
-						<!--변경된 부분 button type = submit -> button, onclick 추가 -->
-							<button type="submit" class="btn btn-primary" >
+							<!--변경된 부분 button type = submit -> button, onclick 추가 -->
+							<button type="submit" class="btn btn-primary">
 								<i class="fas fa-check"></i> 비밀번호 변경
 							</button>
 						</div>
@@ -360,11 +376,22 @@
 		</div>
 	</div>
 	<c:if test="${not empty errorMsg}">
-	<script>
-		alert("${errorMsg}");
-	</script>
-</c:if>
-
+		<script>
+			alert("${errorMsg}");
+		</script>
+	</c:if>
+	<!-- 2025-04-10 수정 시작 -->
+	<c:if test="${not empty return_successMSG}">
+		<script>
+			alert("${return_successMSG}");
+		</script>
+	</c:if>
+	<c:if test="${not empty return_errorMsg}">
+		<script>
+			alert("${return_errorMsg}");
+		</script>
+	</c:if>
+	<!-- 2025-04-10 수정 종료 -->
 
 </body>
 </html>

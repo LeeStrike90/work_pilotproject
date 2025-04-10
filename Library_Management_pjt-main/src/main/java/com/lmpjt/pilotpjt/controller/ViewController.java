@@ -32,10 +32,6 @@ public class ViewController {
 		model.addAttribute("overdueBooks", 1324+utilService.getOverdueBooks());
 		model.addAttribute("bookList", bookSerivce.mainBookInfo());
 		
-//		ArrayList<BookDTO> bookList = bookSerivce.mainBookInfo();
-//	    for (BookDTO book : bookList) {
-//	        System.out.println("asdf : " + book.getBookTitle() + " / ����: " + book.getBookCount());
-//	    }
 		return "main";
 	}
 
@@ -44,10 +40,7 @@ public class ViewController {
 	public String loginPage() {
 		return "login";
 	}
-	@RequestMapping("/mypage")
-	public String mypage() {
-		return "mypage";
-	}
+
 
 	@RequestMapping("/logout")
 	public String logout(HttpSession session) {
