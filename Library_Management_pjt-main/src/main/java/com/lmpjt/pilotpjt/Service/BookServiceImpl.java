@@ -79,15 +79,16 @@ public class BookServiceImpl implements BookService {
 		BookDAO dao = sqlSession.getMapper(BookDAO.class);
 		System.out.println(param);
 		ArrayList<BookRecordDTO> list = dao.bookBorrowed(param);
+
 		return list;
 	}
-
+	
 	@Override
-	public ArrayList<BookRecordDTO> bookReturnRecord(HashMap<String, String> param)
-	{
+	public ArrayList<BookRecordDTO> bookBorrowRecord(HashMap<String, String> param) {
 		BookDAO dao = sqlSession.getMapper(BookDAO.class);
 		System.out.println(param);
-		ArrayList<BookRecordDTO> list = dao.bookReturnRecord(param);
+		ArrayList<BookRecordDTO> list = dao.bookBorrowRecord(param);
+		
 		return list;
 	}
 }

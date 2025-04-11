@@ -23,6 +23,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.lmpjt.pilotpjt.Service.BookService;
 import com.lmpjt.pilotpjt.Service.UserService;
+import com.lmpjt.pilotpjt.Service.UtilService;
 import com.lmpjt.pilotpjt.dao.UserDAO;
 import com.lmpjt.pilotpjt.dto.BookRecordDTO;
 import com.lmpjt.pilotpjt.dto.UserDTO;
@@ -31,29 +32,26 @@ import lombok.extern.slf4j.Slf4j;
 
 @Controller
 @Slf4j
-public class UserController
-{
+public class UserController {
 	@Autowired
 	private UserService service;
-
+	
 	@Autowired
 	private BookService bookService;
+	@Autowired
+	private UtilService utilSerivce;
 
 	@RequestMapping("/login")
-	public String login(HttpServletRequest request, @RequestParam HashMap<String, String> param)
-	{
+	public String login(HttpServletRequest request, @RequestParam HashMap<String, String> param) {
 
 		ArrayList<UserDTO> dtos = service.userLogin(param);
 
 		UserDTO dto = service.getUserInfo(param);
 
-		if (dtos.isEmpty())
-		{
+		if (dtos.isEmpty()) {
 			return "redirect:loginView";
-		} else
-		{
-			if (param.get("userPw").equals(dtos.get(0).getUserPw()))
-			{
+		} else {
+			if (param.get("userPw").equals(dtos.get(0).getUserPw())) {
 				HttpSession session = request.getSession();
 				session.setAttribute("loginUser", dto);
 				return "redirect:main";
@@ -63,17 +61,13 @@ public class UserController
 	}
 
 	@RequestMapping("/join")
-	public ResponseEntity<String> join(HttpServletRequest request, @RequestParam HashMap<String, String> param)
-	{
+	public ResponseEntity<String> join(HttpServletRequest request, @RequestParam HashMap<String, String> param) {
 
-		if (service.checkId(param) != null)
-		{
-
-		} else
-		{
+		if (service.checkId(param) != null) {
+			
+		} else {
 			int re = service.userJoin(param);
-			if (re == 1)
-			{
+			if (re == 1) {
 				return ResponseEntity.ok("available");
 			}
 		}
@@ -81,30 +75,34 @@ public class UserController
 	}
 
 	@RequestMapping("/user_info")
-	public String getUserInfo(int u_number)
-	{
+	public String getUserInfo(int u_number) {
 		return "user_info";
 	}
-
+	
 	@RequestMapping("/mypage")
-	public String mypage(HttpServletRequest request, @RequestParam HashMap<String, String> param, Model model)
-	{
+	public String mypage(HttpServletRequest request, @RequestParam HashMap<String, String> param, Model model) {
 		UserDTO dto = (UserDTO) request.getSession().getAttribute("loginUser");
-
+		
 		param.put("userNumber", String.valueOf(dto.getUserNumber()));
 		ArrayList<BookRecordDTO> bookBorrowedList = bookService.bookBorrowed(param);
-		ArrayList<BookRecordDTO> bookReturnRecordList = bookService.bookReturnRecord(param);
+		ArrayList<BookRecordDTO> bookBorrowList = bookService.bookBorrowRecord(param);
+		int userBorrowedBooks = utilSerivce.getUserBorrowed(param);
+		int userRecord = utilSerivce.getUserRecord(param);
+		int userOver = utilSerivce.getUserOver(param);
 		model.addAttribute("bookBorrowedList", bookBorrowedList);
-		model.addAttribute("bookReturnList", bookReturnRecordList);
+		model.addAttribute("bookBorrowList", bookBorrowList);
+		model.addAttribute("userBorrowedBooks", userBorrowedBooks);
+		model.addAttribute("userRecord", userRecord);	
+		model.addAttribute("userOver", userOver);
+		
 		return "mypage";
 	}
+	
 
 	@RequestMapping("/user_update_view")
-	public String updateUserInfo(UserDTO user)
-	{
+	public String updateUserInfo(UserDTO user) {
 		return "user_update";
 	}
-
 	@RequestMapping("/userUpdate")
 	public String updateUserInfo(@RequestParam HashMap<String, String> param, HttpSession session)
 	{
@@ -117,6 +115,7 @@ public class UserController
 		{
 			return "redirect:/user_update_view"; // 실패 시 다시 수정 화면
 		}
+
 	}
 
 	@RequestMapping("/userPwUpdate")
@@ -126,25 +125,26 @@ public class UserController
 		int result = -1;
 		System.out.println("tesP : " + param.get("userPw"));
 		System.out.println("userP : " + user.getUserPw());
+		
 		String inputPw = param.get("userPw");
-		String newPw = param.get("userNewPw");
-		String confirmPw = param.get("userNewPwCheck");
-		if (user.getUserPw().equals(param.get("userPw")))
-		{
+	    String newPw = param.get("userNewPw");
+	    String confirmPw = param.get("userNewPwCheck");
+		
+		if(user.getUserPw().equals(param.get("userPw"))) {			
 			result = service.updateUserPwInfo(param);
 		}
-
-		if (result > 0)
-		{
+		
+		if (result > 0) {
 			session.invalidate(); // 세션 초기화 → 자동 로그아웃
 			return "redirect:/loginView"; // 로그인 페이지로
-		} else
-		{
+		} 
+		else
+		{			
 			model.addAttribute("errorMsg", "현재 비밀번호가 일치하지 않습니다.");
-			model.addAttribute("userPw", inputPw);
-			model.addAttribute("userNewPw", newPw);
-			model.addAttribute("userNewPwCheck", confirmPw);
-			return "mypage"; // 이 JSP가 위 코드와 같은 JSP라고 가정
+	        model.addAttribute("userPw", inputPw);
+	        model.addAttribute("userNewPw", newPw);
+	        model.addAttribute("userNewPwCheck", confirmPw);
+	        return "mypage"; // 이 JSP가 위 코드와 같은 JSP라고 가정
 		}
 	}
 }

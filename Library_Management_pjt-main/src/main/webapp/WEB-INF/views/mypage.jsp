@@ -2,8 +2,11 @@
 <%@page import="java.util.List"%>
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 	pageEncoding="UTF-8"%>
-<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -51,12 +54,18 @@
 		return;
 	}
 
-	// 대출 중인 도서 수 (예시 데이터)
-	int borrowingCount = user.getUserBorrow();
+	Object userBorrowedBooksObj = request.getAttribute("userBorrowedBooks");
+	int borrowingCount = 0; // 기본값 설정
+	if (userBorrowedBooksObj != null) {
+	    try {
+	        borrowingCount = Integer.parseInt(String.valueOf(userBorrowedBooksObj));
+	    } catch (NumberFormatException e) {
+	        // 변환 실패 시 기본값 유지
+	    }
+	}
 	// 연체 도서 수 (예시 데이터)
 	int overdueCount = 0;
-	// 대출 이력 수 (예시 데이터)
-	int historyCount = 12;
+
 	%>
 
 	<div class="mypage-container">
@@ -82,10 +91,7 @@
 					<div class="menu-item" onclick="showTab('books')">
 						<i class="fas fa-book"></i> <span>대출 현황</span>
 					</div>
-					<div class="menu-item" onclick="showTab('history')">
-						<i class="fas fa-history"></i> <span>대출 이력</span>
-					</div>
-					<a href="/pilotpjt/edit_profile" class="menu-item"> <i
+					<a href="user_update_view" class="menu-item"> <i
 						class="fas fa-pen-to-square"></i> <span>정보 수정</span>
 					</a>
 					<div class="menu-item" onclick="showTab('password')">
@@ -105,7 +111,7 @@
 							<div class="stat-icon">
 								<i class="fas fa-book"></i>
 							</div>
-							<div class="stat-value"><%=borrowingCount%></div>
+							<div class="stat-value"><%=borrowingCount %></div>
 							<div class="stat-label">대출 중인 도서</div>
 						</div>
 
@@ -113,7 +119,7 @@
 							<div class="stat-icon">
 								<i class="fas fa-exclamation-circle"></i>
 							</div>
-							<div class="stat-value"><%=overdueCount%></div>
+							<div class="stat-value">${userOver + 2}</div>
 							<div class="stat-label">연체 도서</div>
 						</div>
 
@@ -121,7 +127,7 @@
 							<div class="stat-icon">
 								<i class="fas fa-clock"></i>
 							</div>
-							<div class="stat-value"><%=historyCount%></div>
+							<div class="stat-value">${userRecord}</div>
 							<div class="stat-label">총 대출 이력</div>
 						</div>
 					</div>
@@ -180,72 +186,22 @@
 					</div>
 
 					<%
+					
 					if (borrowingCount > 0) {
 					%>
-					<div class="book-list">
-						<c:forEach var="book" items="${bookBorrowedList}">
-							<div class="book-item">
-								<div class="book-cover">
-									<div class="book-cover-placeholder">
-										<i class="fas fa-book"></i>
-									</div>
-								</div>
-								<div class="book-info">
-									<div class="book-title">${book.bookTitle}</div>
-									<div class="book-author">${book.bookWrite}</div>
-									<div class="book-dates">
-										<span>대출일 : ${book.bookBorrowDate}</span> <span>반납예정일 :
-											${book.bookReturnDate}</span>
-									</div>
-								</div>
-								<div class="book-status status-borrowed">대출 중</div>
-								<div class="book-status status-return">
-									<form class="returnForm"
-										style="display: inline-block; margin-top: 10px;">
-										<input type="hidden" name="bookNumber"
-											value="${book.bookNumber}">
-										<button type="button" class="return-button"
-											onclick="return_submit(this)">
-											<i class="fas fa-undo-alt"></i> 반납하기
-										</button>
-									</form>
-								</div>
-							</div>
-						</c:forEach>
-					</div>
-					<%
-					} else {
-					%>
-					<div class="empty-state">
-						<div class="empty-icon">
-							<i class="fas fa-book"></i>
-						</div>
-						<div class="empty-message">현재 대출 중인 도서가 없습니다.</div>
-						<a href="/pilotpjt/book_list" class="btn btn-outline"> <i
-							class="fas fa-search"></i> 도서 검색하기
-						</a>
-					</div>
-					<%
-					}
-					%>
-				</div>
-
-				<div id="history-tab" class="tab-content">
-					<div class="section-header">
-						<h2 class="section-title">대출 이력</h2>
-					</div>
-
 					<div class="tab-container">
 						<div class="tab-buttons">
-							<button class="tab-button active" onclick="showHistoryTab('all')">전체</button>
-							<button class="tab-button" onclick="showHistoryTab('returned')">반납기록</button>
-							<button class="tab-button" onclick="showHistoryTab('overdue')">대출기록</button>
+							<button class="tab-button active"
+								onclick="showHistoryTab('borrowed', event)">대출 중</button>
+							<button class="tab-button"
+								onclick="showHistoryTab('returnRecord', event)">대출 기록</button>
 						</div>
 
-						<!-- 전체기록 -->
-						<div id="all-history" class="tab-content active">
+
+						<div id="borrowed" class="tab-content active">
 							<div class="book-list">
-								<c:forEach var="bookAllRecord" items="${bookAllList}">
+								<c:forEach var="book" items="${bookBorrowedList}">
+
 									<div class="book-item">
 										<div class="book-cover">
 											<div class="book-cover-placeholder">
@@ -253,43 +209,31 @@
 											</div>
 										</div>
 										<div class="book-info">
-											<div class="book-title">${bookAllRecord.bookTitle}</div>
-											<div class="book-author">${bookAllRecord.bookWrite}</div>
+											<div class="book-title">${book.bookTitle}</div>
+											<div class="book-author">${book.bookWrite}</div>
 											<div class="book-dates">
-												<span>대출일 : ${bookAllRecord.bookBorrowDate}</span> <span>반납일
-													: ${bookAllRecord.bookReturnDate}</span>
+												<span>대출일 : ${book.bookBorrowDate}</span> <span>반납예정일
+													: ${book.bookReturnDate}</span>
 											</div>
+										</div>
+										<div class="book-status status-borrowed">대출 중</div>
+										<div class="book-status status-return">
+											<form class="returnForm"
+												style="display: inline-block; margin-top: 10px;">
+												<input type="hidden" name="bookNumber"
+													value="${book.bookNumber}">
+												<button type="button" class="return-button"
+													onclick="return_submit(this)">
+													<i class="fas fa-undo-alt"></i> 반납하기
+												</button>
+											</form>
 										</div>
 									</div>
 								</c:forEach>
 							</div>
 						</div>
-
-						<!-- 반납완료 -->
-						<div id="returned-history" class="tab-content">
-							<div class="book-list">
-								<c:forEach var="bookReturnRecord" items="${bookReturnList}">
-									<div class="book-item">
-										<div class="book-cover">
-											<div class="book-cover-placeholder">
-												<i class="fas fa-book"></i>
-											</div>
-										</div>
-										<div class="book-info">
-											<div class="book-title">${bookReturnRecord.bookTitle}</div>
-											<div class="book-author">${bookReturnRecord.bookWrite}</div>
-											<div class="book-dates">
-												<span>대출일 : ${bookReturnRecord.bookBorrowDate}</span> <span>반납일
-													: ${bookReturnRecord.bookReturnDate}</span>
-											</div>
-										</div>
-									</div>
-								</c:forEach>
-							</div>
-						</div>
-
-						<!-- 연체이력 -->
-						<div id="overdue-history" class="tab-content">
+						<!-- 대출기록 -->
+						<div id="returnRecord" class="tab-content">
 							<div class="book-list">
 								<c:forEach var="bookBorrowRecord" items="${bookBorrowList}">
 									<div class="book-item">
@@ -311,16 +255,27 @@
 							</div>
 						</div>
 					</div>
+					<%
+					} else {
+					%>
+					<div class="empty-state">
+						<div class="empty-icon">
+							<i class="fas fa-book"></i>
+						</div>
+						<div class="empty-message">현재 대출 중인 도서가 없습니다.</div>
+						<a href="book_search_view" class="btn btn-outline"> <i
+							class="fas fa-search"></i> 도서 검색하기
+						</a>
+					</div>
+					<%
+					}
+					%>
 				</div>
 
 				<div id="password-tab" class="tab-content">
 					<div class="section-header">
 						<h2 class="section-title">비밀번호 변경</h2>
 					</div>
-
-
-
-
 
 					<form action="userPwUpdate" method="post"
 						onsubmit="return validatePasswordForm()">

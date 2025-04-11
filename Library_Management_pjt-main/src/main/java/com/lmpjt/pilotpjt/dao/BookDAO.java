@@ -33,5 +33,6 @@ public interface BookDAO {
 	public ArrayList<BookDTO> isReturned(HashMap<String, String> param);
 	
 	public ArrayList<BookRecordDTO> bookBorrowed(HashMap<String, String> param);
-	public ArrayList<BookRecordDTO> bookReturnRecord(HashMap<String, String> param);
+	
+	public ArrayList<BookRecordDTO> bookBorrowRecord(HashMap<String, String> param);
 }

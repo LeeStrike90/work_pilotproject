@@ -47,24 +47,22 @@ public class BookController {
 	}
 
 	@RequestMapping("/update_book_ok")
-	public String updateBook(@RequestParam HashMap<String, String> param) 
-	{
+	public String updateBook(@RequestParam HashMap<String, String> param) {
+
 		service.updateBook(param);
 		System.out.println(param);
 		return "main";
 	}
 
 	@RequestMapping("/book_search_view")
-	public String searchBookView(@RequestParam HashMap<String, String> param, Model model) 
-	{
+	public String searchBookView(@RequestParam HashMap<String, String> param, Model model) {
 		List<BookDTO> list = service.searchBookInfo(param);
 		model.addAttribute("bookList", list);
 		return "book_search";
 	}
 
 	@RequestMapping("/book_detail")
-	public String bookDetail(@RequestParam HashMap<String, String> param, Model model) 
-	{
+	public String bookDetail(@RequestParam HashMap<String, String> param, Model model) {
 		BookDTO dto = service.bookDetailInfo(param);
 		System.out.println("param : " + param);
 		System.out.println("result : " + dto);
@@ -73,24 +71,19 @@ public class BookController {
 	}
 
 	@RequestMapping("/book_borrow")
-	public ResponseEntity<String> bookBorrow(@RequestParam HashMap<String, String> param, HttpServletRequest request) 
-	{
+	public ResponseEntity<String> bookBorrow(@RequestParam HashMap<String, String> param, HttpServletRequest request) {
 		UserDTO user = (UserDTO) request.getSession().getAttribute("loginUser");
 
-		if (user == null) 
-		{
+		if (user == null) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body("noUser");
 		}
 
 		param.put("userNumber", String.valueOf(user.getUserNumber()));
 
-		try 
-		{
+		try {
 			service.bookBorrow(param);
 			return ResponseEntity.ok("successBorrow");
-		} 
-		catch (Exception e) 
-		{
+		} catch (Exception e) {
 			e.printStackTrace();
 			String msg = (e.getMessage() != null) ? e.getMessage() : "";
 
