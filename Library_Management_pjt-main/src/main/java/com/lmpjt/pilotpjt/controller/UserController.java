@@ -21,8 +21,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.lmpjt.pilotpjt.Service.BookService;
 import com.lmpjt.pilotpjt.Service.UserService;
+import com.lmpjt.pilotpjt.Service.UtilService;
 import com.lmpjt.pilotpjt.dao.UserDAO;
+import com.lmpjt.pilotpjt.dto.BookRecordDTO;
 import com.lmpjt.pilotpjt.dto.UserDTO;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,15 +33,16 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 @Slf4j
 public class UserController {
-//	@Autowired
-//	private SqlSession sqlSession;
-
 	@Autowired
 	private UserService service;
+	
+	@Autowired
+	private BookService bookService;
+	@Autowired
+	private UtilService utilSerivce;
 
 	@RequestMapping("/login")
 	public String login(HttpServletRequest request, @RequestParam HashMap<String, String> param) {
-//		UserDAO dao = sqlSession.getMapper(UserDAO.class);
 
 		ArrayList<UserDTO> dtos = service.userLogin(param);
 
@@ -64,7 +68,6 @@ public class UserController {
 		} else {
 			int re = service.userJoin(param);
 			if (re == 1) {
-//				return "redirect:loginView";
 				return ResponseEntity.ok("available");
 			}
 		}
@@ -75,6 +78,26 @@ public class UserController {
 	public String getUserInfo(int u_number) {
 		return "user_info";
 	}
+	
+	@RequestMapping("/mypage")
+	public String mypage(HttpServletRequest request, @RequestParam HashMap<String, String> param, Model model) {
+		UserDTO dto = (UserDTO) request.getSession().getAttribute("loginUser");
+		
+		param.put("userNumber", String.valueOf(dto.getUserNumber()));
+		ArrayList<BookRecordDTO> bookBorrowedList = bookService.bookBorrowed(param);
+		ArrayList<BookRecordDTO> bookBorrowList = bookService.bookBorrowRecord(param);
+		int userBorrowedBooks = utilSerivce.getUserBorrowed(param);
+		int userRecord = utilSerivce.getUserRecord(param);
+		int userOver = utilSerivce.getUserOver(param);
+		model.addAttribute("bookBorrowedList", bookBorrowedList);
+		model.addAttribute("bookBorrowList", bookBorrowList);
+		model.addAttribute("userBorrowedBooks", userBorrowedBooks);
+		model.addAttribute("userRecord", userRecord);	
+		model.addAttribute("userOver", userOver);
+		
+		return "mypage";
+	}
+	
 
 	@RequestMapping("/user_update_view")
 	public String updateUserInfo(UserDTO user) {
@@ -84,7 +107,6 @@ public class UserController {
 	public String updateUserInfo(@RequestParam HashMap<String, String> param, HttpSession session)
 	{
 		int result = service.updateUserInfo(param);
-//		service.updateUserInfo(param);
 		if (result > 0)
 		{
 			session.invalidate(); // 세션 초기화 → 자동 로그아웃
@@ -112,15 +134,12 @@ public class UserController {
 			result = service.updateUserPwInfo(param);
 		}
 		
-		if (result > 0)
-		{
+		if (result > 0) {
 			session.invalidate(); // 세션 초기화 → 자동 로그아웃
 			return "redirect:/loginView"; // 로그인 페이지로
 		} 
 		else
 		{			
-//			return "/mypage?tab=history"; // 실패 시 다시 수정 화면
-//			return "/mypage"; // 실패 시 다시 수정 화면
 			model.addAttribute("errorMsg", "현재 비밀번호가 일치하지 않습니다.");
 	        model.addAttribute("userPw", inputPw);
 	        model.addAttribute("userNewPw", newPw);
