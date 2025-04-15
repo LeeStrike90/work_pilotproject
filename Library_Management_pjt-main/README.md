@@ -61,15 +61,6 @@ CREATE TABLE NOTICE(
     noticeCategory       VARCHAR2(30)
 );
 
-CREATE TABLE BOOK_REGISTATION_LOG (
-    logNumber      NUMBER PRIMARY KEY,
-    userNumber  NUMBER,
-    bookNumber  NUMBER,
-    regDate     DATE DEFAULT SYSDATE,
-    FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber) ON DELETE CASCADE,
-    FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)ON DELETE CASCADE
-);
-
 CREATE TABLE BOARD (
     boardNumber     NUMBER PRIMARY KEY,
     userNumber      NUMBER,
@@ -124,56 +115,87 @@ CREATE TABLE BOOK_BORROW (
     FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber)ON DELETE CASCADE,
     FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)ON DELETE CASCADE
 );
-CREATE TABLE BORROW_RECORD (
-    borrowRecordNumber  NUMBER PRIMARY KEY,
+CREATE TABLE Book_RECORD (
+    recordNumber  NUMBER PRIMARY KEY,
     userNumber          NUMBER,
     bookNumber          NUMBER,
     bookTitle           VARCHAR2 (400),
     bookWrite           VARCHAR2 (100),
     bookBorrowDate      DATE,
+    bookReturnDate      DATE,
     FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber),
     FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)
-);
-CREATE TABLE RETURN_RECORD (
-    returnNumber        NUMBER PRIMARY KEY,
-    userNumber          NUMBER,
-    bookNumber          NUMBER,
-    bookTitle           VARCHAR2 (400),
-    bookWrite           VARCHAR2 (100),
-    bookReturnDate      DATE DEFAULT SYSDATE,
-    bookJoinKey         NUMBER,
-    FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber),
-    FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)
-);
-CREATE TABLE SELL_BOOK (
-    sellNumber      NUMBER PRIMARY KEY,
-    bookNumber      NUMBER,
-    userNumber      NUMBER,
-    FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)ON DELETE CASCADE,
-    FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber)ON DELETE CASCADE
-);
-CREATE TABLE SELL_RECORD (
-    sellRecordNumber    NUMBER PRIMARY KEY,
-    sellNumber          NUMBER,
-    userNumber          NUMBER,
-    bookNumber          NUMBER,
-    FOREIGN KEY (sellNumber) REFERENCES SELL_BOOK(sellNumber)ON DELETE CASCADE,
-    FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber)ON DELETE CASCADE,
-    FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)ON DELETE CASCADE
-);
-CREATE TABLE BUY_RECORD (
-    buyRecordNumber     NUMBER PRIMARY KEY,
-    userNumber          NUMBER,
-    bookNumber          NUMBER,
-    FOREIGN KEY (userNumber) REFERENCES USERINFO(userNumber)ON DELETE CASCADE,
-    FOREIGN KEY (bookNumber) REFERENCES BOOKINFO(bookNumber)ON DELETE CASCADE
 );
 
 
 --------------------------------------------- 시퀀스 드래그로 개별 컴파일
-CREATE SEQUENCE  "BOOKMANAGER"."BORROWRECORD_SEQ"  MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 15 NOCACHE  NOORDER  NOCYCLE
+CREATE SEQUENCE  "BOOKMANAGER"."BORROWRECORD_SEQ"  MINVALUE 1 MAXVALUE 9999999999999999999999999999 INCREMENT BY 1 START WITH 1 NOCACHE  NOORDER  NOCYCLE 
 
 
+--------------------------------------------- 트리거 드래그로 개별 컴파일
+create or replace TRIGGER after_book_record_insert
+after INSERT ON book_record
+FOR EACH ROW
+
+BEGIN
+     -- BOOKINFO 업데이트
+    UPDATE BOOKINFO
+    SET
+        BOOKCOUNT = BOOKCOUNT + 1
+    WHERE BOOKNUMBER = :NEW.BOOKNUMBER;
+
+    -- USERINFO 업데이트
+    UPDATE USERINFO
+    SET
+        USERCANBORROW = USERCANBORROW + 1
+    WHERE USERNUMBER = :NEW.USERNUMBER;
+
+END;
+--------------------------------------------- 트리거 드래그로 개별 컴파일
+create or replace TRIGGER before_book_record_insert
+BEFORE INSERT ON book_record
+FOR EACH ROW
+DECLARE
+    v_borrowDate DATE;
+    v_borrowNumber NUMBER;
+    v_booktitle varchar2(400);
+    v_bookwrite varchar2(100);
+    v_recordNumber number;
+    v_returnDate date default SYSDATE;
+    ex_no_borrow EXCEPTION;
+BEGIN
+    -- 해당 대출 정보 유무 확인
+    SELECT borrowNumber, bookBorrowDate
+    INTO v_borrowNumber, v_borrowDate
+    FROM book_borrow
+    WHERE bookNumber = :NEW.bookNumber
+      AND userNumber = :NEW.userNumber;
+      
+    select booktitle, bookwrite
+    into v_booktitle, v_bookwrite
+    from bookinfo
+    where bookNumber = :NEW.bookNumber;
+    
+     -- 새로운 borrowRecordNumber 미리 생성
+    SELECT NVL(MAX(recordNumber), 0) + 1
+    INTO v_recordNumber
+    FROM book_record;
+   
+    :NEW.bookBorrowDate := v_borrowDate;
+    :NEW.bookReturnDate := v_returnDate;
+    :NEW.booktitle := v_booktitle;
+    :NEW.bookwrite := v_bookwrite;
+    
+
+    -- 그 다음 BOOK_BORROW에서 삭제
+    DELETE FROM book_borrow
+    WHERE bookNumber = :NEW.bookNumber
+      AND userNumber = :NEW.userNumber;
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        RAISE_APPLICATION_ERROR(-20004, '대출 정보가 존재하지 않아 반납할 수 없습니다.');
+END;
 --------------------------------------------- 트리거 드래그로 개별 컴파일
 
 create or replace TRIGGER trg_after_book_borrow_insert
@@ -195,12 +217,12 @@ BEGIN
     SELECT BOOKCOUNT, booktitle, bookwrite INTO v_bookcount, v_booktitle, v_bookwrite
     FROM BOOKINFO
     WHERE BOOKNUMBER = :NEW.BOOKNUMBER;
-    
-    
+
+
     :NEW.booktitle := v_booktitle;
     :NEW.bookwrite := v_bookwrite;
     :NEW.bookReturnDate := SYSDATE + 30;
-    
+
     -- 사용자 대출 가능 횟수 확인
     SELECT USERCANBORROW INTO v_usercanborrow
     FROM USERINFO
@@ -248,90 +270,12 @@ EXCEPTION
         RAISE_APPLICATION_ERROR(-20003, '트리거 처리 중 오류 발생: ' || SQLERRM);
 END;
 
-create or replace TRIGGER after_return_record_insert
-after INSERT ON return_record
-FOR EACH ROW
 
-BEGIN
-     -- BOOKINFO 업데이트
-    UPDATE BOOKINFO
-    SET
-        BOOKCOUNT = BOOKCOUNT + 1
-    WHERE BOOKNUMBER = :NEW.BOOKNUMBER;
-
-    -- USERINFO 업데이트
-    UPDATE USERINFO
-    SET
-        USERCANBORROW = USERCANBORROW + 1
-    WHERE USERNUMBER = :NEW.USERNUMBER;
-    
-END;
-
-create or replace TRIGGER before_return_record_insert
-BEFORE INSERT ON return_record
-FOR EACH ROW
-DECLARE
-    v_borrowDate DATE;
-    v_borrowNumber NUMBER;
-    v_booktitle varchar2(400);
-    v_bookwrite varchar2(100);
-    v_borrowRecordNumber number;
-    ex_no_borrow EXCEPTION;
-BEGIN
-    -- 해당 대출 정보 유무 확인
-    SELECT borrowNumber, bookBorrowDate
-    INTO v_borrowNumber, v_borrowDate
-    FROM book_borrow
-    WHERE bookNumber = :NEW.bookNumber
-      AND userNumber = :NEW.userNumber;
-      
-    select booktitle, bookwrite
-    into v_booktitle, v_bookwrite
-    from bookinfo
-    where bookNumber = :NEW.bookNumber;
-    
-     -- 새로운 borrowRecordNumber 미리 생성
-    SELECT NVL(MAX(borrowRecordNumber), 0) + 1
-    INTO v_borrowRecordNumber
-    FROM borrow_record;
-    
-    
-    :NEW.booktitle := v_booktitle;
-    :NEW.bookwrite := v_bookwrite;
-    :NEW.bookjoinkey := v_borrowRecordNumber;
-
-    -- 먼저 BORROW_RECORD에 기록
-    INSERT INTO borrow_record (
-        borrowRecordNumber,
-        userNumber,
-        bookNumber,
-        bookBorrowDate,
-        booktitle,
-        bookwrite
-    )
-    VALUES (
-        v_borrowRecordNumber,
-        :NEW.userNumber,
-        :NEW.bookNumber,
-        v_borrowDate,
-        v_booktitle,
-        v_bookwrite
-    );
-
-    -- 그 다음 BOOK_BORROW에서 삭제
-    DELETE FROM book_borrow
-    WHERE bookNumber = :NEW.bookNumber
-      AND userNumber = :NEW.userNumber;
-
-EXCEPTION
-    WHEN NO_DATA_FOUND THEN
-        RAISE_APPLICATION_ERROR(-20004, '대출 정보가 존재하지 않아 반납할 수 없습니다.');
-END;
 
 ```
 
 ## ERD
-![image](https://github.com/user-attachments/assets/5c668ab5-4098-439b-a0d1-85609255b0c1)
+![image](https://github.com/user-attachments/assets/83570193-7608-4401-99d2-f49fd906f9d9)
 
 ## 로그인 & 회원가입 플로우차트
 ![image](https://github.com/user-attachments/assets/4042bba2-7485-47e2-ab54-9bbd5991b108)

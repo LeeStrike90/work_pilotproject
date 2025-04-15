@@ -8,10 +8,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookRecordDTO {
+	private int recordNumber;
 	private int userNumber;
-    private int bookNumber;
-    private String bookTitle;
-    private String bookWrite;
-    private String bookBorrowDate;
-    private String bookReturnDate;
+	private int bookNumber;
+	private String bookTitle;
+	private String bookWrite;
+	private String bookBorrowDate;
+	private String bookReturnDate;
 }

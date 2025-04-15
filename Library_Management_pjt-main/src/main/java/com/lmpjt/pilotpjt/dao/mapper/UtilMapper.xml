@@ -31,21 +31,24 @@
 		WHERE (SYSDATE - bookBorrowDate) > 30
 	</select>
 
+	<!-- 유저의 연체된 도서 수 -->
 	<select id="getUserOver" resultType="int">
 		SELECT COUNT(*)
 		FROM
 		book_borrow
 		WHERE (SYSDATE - bookBorrowDate) > 30 and
 		userNumber=#{userNumber}
-
 	</select>
 
+	<!-- 유저가 빌리고 있는 도서 수 -->
 	<select id="getUserBorrowed" resultType="int">
 		select count(*)
 		from
 		book_borrow
 		where userNUmber = #{userNumber}
 	</select>
+
+	<!-- 유저 도서대출 수 ***(대출하는 순간 올라감)*** -->
 	<select id="getUserRecord" resultType="int">
 		select userBorrow
 		from
@@ -53,4 +56,10 @@
 		where userNumber = #{userNumber}
 	</select>
 
+	<!-- 기록테이블의 유저 책 수 ***(반납하는 순간 올라감)*** -->
+	<select id="getBookRecordCount" resultType="int">
+		select count(*) from
+		book_record
+		where userNumber=#{userNumber}
+	</select>
 </mapper>
